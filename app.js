@@ -8,34 +8,35 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('add-btn').addEventListener('click', addIdea);
   document.getElementById('clear-btn').addEventListener('click', clearIdeas);
 
+  // Enter key shortcut — users expect this on text inputs
   document.getElementById('idea-input').addEventListener('keydown', e => {
     if (e.key === 'Enter') addIdea();
   });
 
-  renderIdeas();
+  renderIdeas(); // render empty state on load
 });
 
 function addIdea() {
-  const input = document.getElementById('idea-input');
+  const input    = document.getElementById('idea-input');
   const errorMsg = document.getElementById('error-msg');
-  const text = input.value.trim();
+  const text     = input.value.trim(); // always trim first
 
+  // Validate — show a specific message, don't silently ignore
   if (!text) {
     errorMsg.textContent = 'Please enter an idea before adding.';
     input.focus();
     return;
   }
 
-  errorMsg.textContent = '';
+  errorMsg.textContent = ''; // clear any previous error
   ideas.push({ id: Date.now(), text });
-
   input.value = '';
-  input.focus();
+  input.focus(); // re-focus so user can type the next idea immediately
   renderIdeas();
 }
 
 function clearIdeas() {
-  ideas.length = 0;
+  ideas.length = 0; // mutate in place — same array reference
   renderIdeas();
 }
 
@@ -47,35 +48,30 @@ function renderIdeas() {
     return;
   }
 
+  // Build HTML string — escapeHtml() is REQUIRED before injecting user text
   list.innerHTML = ideas
     .map(idea => `
       <div class="idea-card">
         <span>${escapeHtml(idea.text)}</span>
-        <button class="remove-btn" data-id="${idea.id}" aria-label="Remove idea">✕</button>
+        <button onclick="removeIdea(${idea.id})" aria-label="Remove idea">✕</button>
       </div>
     `)
     .join('');
-
-  document.querySelectorAll('.remove-btn').forEach(button => {
-    button.addEventListener('click', () => {
-      const id = Number(button.dataset.id);
-      removeIdea(id);
-    });
-  });
 }
 
 function removeIdea(id) {
-  const idx = ideas.findIndex(idea => idea.id === id);
-
-  if (idx !== -1) {
-    ideas.splice(idx, 1);
-  }
-
+  // findIndex + splice: O(n) but fine for a small list
+  const idx = ideas.findIndex(i => i.id === id);
+  if (idx !== -1) ideas.splice(idx, 1);
   renderIdeas();
 }
 
+// Prevents XSS when injecting user text into innerHTML
+// Converts <script> to &lt;script&gt; so it renders as text, not code
 function escapeHtml(text) {
   const div = document.createElement('div');
   div.appendChild(document.createTextNode(text));
   return div.innerHTML;
 }
+
+
